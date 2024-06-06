@@ -2,7 +2,7 @@
 @section('content')
 <div class="container">
     <div class="card">
-        <div class="card-header">English Chat</div>
+        <div class="card-header">Chat</div>
         <div class="card-body">
             <chat-messages :messages="messages"></chat-messages>
         </div>

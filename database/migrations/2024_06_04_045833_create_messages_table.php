@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->integer('user_id')->unsigned();
+            $table->text('language');
             $table->text('message');
             $table->timestamps();
         });

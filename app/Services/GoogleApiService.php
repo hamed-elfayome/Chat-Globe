@@ -19,7 +19,7 @@ class GoogleApiService
         ]);
     }
 
-    public function translateText($apiKey, $text, $lang = 'english')
+    public function translateText($apiKey, $text, $lang)
     {
         $endpoint = 'models/gemini-1.5-flash:generateContent?key=' . $apiKey;
 
@@ -28,18 +28,23 @@ class GoogleApiService
                 [
                     'parts' => [
                         [
-                            'text' => 'translate the next text into ' . $lang . ' reply with the translation only' . ', the text:" '.$text . ' "',
+                            'text' => 'translate meaning the next text into ' . $lang . ' reply with the translation only' . ', the text:" '.$text . ' ",important:: if the text is written in ' . $lang .' do not translate and reply with this only: "654165416598561"',
                         ],
                     ],
                 ],
             ],
+
         ];
 
         try {
             $response = $this->client->post($endpoint, ['json' => $body]);
             $data = json_decode($response->getBody(), true);
-            // Assuming the response structure contains the translated text
             $translatedText = $data['candidates'][0]['content']['parts'][0]['text']?? null;
+
+            if ($translatedText == '654165416598561' || $translatedText == null) {
+                return $text;
+            }
+
             return $translatedText;
         } catch (GuzzleException $e) {
             return ['error' => $e->getMessage()];

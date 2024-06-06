@@ -23,8 +23,12 @@ class ChatsController extends Controller
 
     public function fetchMessages()
     {
-        return Message::with('user')->get();
-    }
+        $user = Auth::user();
+        $messages = Message::with('user')
+            ->where('language', $user->language)
+            ->get();
+
+        return response()->json($messages);    }
 
     public function sendMessage(Request $request)
     {
@@ -33,11 +37,13 @@ class ChatsController extends Controller
         // $message = $user->messages()->create([
         //     'message' => $request->input('message')
         // ]);
-        
+
         // broadcast(new MessageSent($user, $message))->toOthers();
-    
-        TranslateAndBroadcastMessage::dispatch($user->id, $messageText);
-        
+
+        $lang = ['arabic','english'];
+
+        TranslateAndBroadcastMessage::dispatch($user->id, $messageText, $lang);
+
         return ['status' => 'Message Sent!'];
     }
 }

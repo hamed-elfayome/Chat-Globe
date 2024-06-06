@@ -11,6 +11,8 @@ use App\Models\Message;
 use App\Models\User;
 use App\Services\GoogleApiService;
 use App\Events\MessageSent;
+use Illuminate\Support\Facades\Log;
+
 
 class TranslateAndBroadcastMessage implements ShouldQueue
 {
@@ -18,16 +20,18 @@ class TranslateAndBroadcastMessage implements ShouldQueue
 
     protected $messageText;
     protected $userId;
+    protected $language;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($userId, $messageText)
+    public function __construct($userId, $messageText, $language)
     {
         $this->userId = $userId;
         $this->messageText = $messageText;
+        $this->language = $language;
     }
 
     /**
@@ -38,15 +42,26 @@ class TranslateAndBroadcastMessage implements ShouldQueue
     public function handle(GoogleApiService $googleApiService)
     {
         $apiKey = config('services.google.api_key');
-        $translatedMessage = $googleApiService->translateText($apiKey, $this->messageText);
 
-        if ($translatedMessage) {
-            $user = User::find($this->userId);
-            $message = $user->messages()->create([
-                'message' => $translatedMessage
-            ]);
+        $user = User::find($this->userId);
 
-            broadcast(new MessageSent($user, $message))->toOthers();
+        foreach ($this->language as $lang) {
+            $message = new Message();
+            $message->user_id = $user->id;
+            $message->language = $lang;
+
+            if ($lang != $user->language) {
+                $translatedMessage = $googleApiService->translateText($apiKey, $this->messageText, $lang);
+                $message->message = $translatedMessage;
+            } else {
+                $message->message = $this->messageText;
+            }
+
+            $message->save();
         }
+
+        broadcast(new MessageSent($user));
+
+
     }
 }
